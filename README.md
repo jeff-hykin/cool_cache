@@ -7,6 +7,7 @@ The smart way to cache function outputs to permanent storage.
 - excellent argument change tracking thanks to `super_hash`
 - even works for impure functions since external vars can be watched
 - works well for class methods by picking parts of `self` to watch
+- uses python pickle for saving function outputs
 
 # How do I use this?
 
