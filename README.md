@@ -5,8 +5,8 @@ The smart way to cache function outputs to permanent storage.
 - auto rebuilds cache when you edit function source code
 - uses mutltiprocessing to keep main thread running fast while saving to disk
 - excellent argument change tracking thanks to `super_hash`
-- even works for impure function when external vars are listed
-- works well for class methods by what picking parts of `self` to watch
+- even works for impure functions since external vars can be watched
+- works well for class methods by picking parts of `self` to watch
 
 # How do I use this?
 
