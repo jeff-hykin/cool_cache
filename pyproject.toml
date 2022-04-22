@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cool_cache"
-version = "0.0.1"
+version = "0.0.2"
 description = "Cache any function to disk"
 authors=[]
 
