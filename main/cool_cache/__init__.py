@@ -29,7 +29,7 @@ class CacheData:
 
 # since we only care about latest
 worker_que = None
-def cache(folder=settings.default_folder, depends_on=[], watch_attributes=[], bust=False):
+def cache(folder=settings.default_folder, depends_on=lambda : None, watch_attributes=[], bust=False):
     global worker_que
     if worker_que is None:
         worker_que = queue.Queue(maxsize=settings.worker_que_size)
@@ -65,7 +65,7 @@ def cache(folder=settings.default_folder, depends_on=[], watch_attributes=[], bu
                             data.cache = cache_temp
                 data.calculated = True
             # check if this arg combination has been used already
-            arg_hash = super_hash((hashed_args, kwargs, depends_on))
+            arg_hash = super_hash((hashed_args, kwargs, depends_on()))
             if arg_hash in data.cache:
                 return data.cache[arg_hash]
             # if args not in cache, run the function
