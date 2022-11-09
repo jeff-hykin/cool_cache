@@ -18,7 +18,6 @@ from super_map import LazyDict
 try:
     # use dill if its available
     import dill as pickle
-    print("using dill")
 except ImportError as error:
     pass
 
