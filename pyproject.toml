@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cool_cache"
-version = "0.0.2"
+version = "0.1.0"
 description = "Cache any function to disk"
 authors=[]
 
@@ -13,7 +13,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = ">=3.7,<3.12"
 file-system-py = "^0.0.6"
-super-hash = "^1.1.0"
+super-hash = "^1.2.2"
 super-map = "^1.2.1"
 
 [tool.poetry.dev-dependencies]

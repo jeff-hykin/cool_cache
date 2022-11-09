@@ -12,9 +12,15 @@ from os import path
 from threading import Thread
 
 import file_system_py as FS
-from super_hash import super_hash
+from super_hash import super_hash, hash_file
 from super_map import LazyDict
 
+try:
+    # use dill if its available
+    import dill as pickle
+    print("using dill")
+except ImportError as error:
+    pass
 
 settings = LazyDict(
     default_folder="cache.ignore/",
@@ -23,13 +29,13 @@ settings = LazyDict(
 
 class CacheData:
     calculated = False
-    cache_file_name: str
+    cache_file_name = ""
+    deep_hash = ""
     cache = {}
-    deep_hash: str
 
 # since we only care about latest
 worker_que = None
-def cache(folder=settings.default_folder, depends_on=lambda : None, watch_attributes=[], bust=False):
+def cache(folder=settings.default_folder, depends_on=lambda:None, watch_attributes=[], watch_filepaths=lambda *args, **kwargs:[], custom_hasher=None, bust=False):
     global worker_que
     if worker_que is None:
         worker_que = queue.Queue(maxsize=settings.worker_que_size)
@@ -64,8 +70,22 @@ def cache(folder=settings.default_folder, depends_on=lambda : None, watch_attrib
                         if func_hash == data.deep_hash:
                             data.cache = cache_temp
                 data.calculated = True
+            
+            # 
+            # filepath hashes
+            # 
+            filepaths_to_watch = watch_filepaths(*args, **kwargs)
+            file_hashes = tuple(hash_file(each) for each in filepaths_to_watch)
+            
+            # 
+            # custom_hasher
+            # 
+            if callable(custom_hasher):
+                hashed_args = custom_hasher(*args, **kwargs)
+                kwargs = None # need to exclude kwargs when custom_hasher is present
+            
             # check if this arg combination has been used already
-            arg_hash = super_hash((hashed_args, kwargs, depends_on()))
+            arg_hash = super_hash((hashed_args, kwargs, depends_on(), file_hashes))
             if arg_hash in data.cache:
                 return data.cache[arg_hash]
             # if args not in cache, run the function

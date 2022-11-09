@@ -27,7 +27,7 @@ setuptools.setup(
     packages=[package_info["name"]],
     install_requires=[
         "file-system-py >= 0.0.6",
-        "super-hash >= 1.1.0",
+        "super-hash >= 1.2.2",
         "super-map >= 1.2.1",
     ],
     classifiers=[
