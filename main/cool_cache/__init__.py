@@ -71,7 +71,7 @@ def cache(folder=settings.default_folder, depends_on=lambda:None, watch_attribut
                                 data.cache = cache_temp
                     except Exception as error:
                         # auto remove corrupted files
-                        FS.remove(cache_file)
+                        FS.remove(data.cache_file_name)
                 data.calculated = True
             
             # 
