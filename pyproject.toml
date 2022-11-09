@@ -12,7 +12,6 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.7,<3.12"
-pip = "20.1.1"
 file-system-py = "^0.0.6"
 super-hash = "^1.1.0"
 super-map = "^1.2.1"
