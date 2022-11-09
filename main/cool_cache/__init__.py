@@ -64,10 +64,14 @@ def cache(folder=settings.default_folder, depends_on=lambda:None, watch_attribut
             if not data.calculated:
                 data.deep_hash = function_id
                 if path.exists(data.cache_file_name):
-                    with open(data.cache_file_name, 'rb') as cache_file:
-                        func_hash, cache_temp = pickle.load(cache_file)
-                        if func_hash == data.deep_hash:
-                            data.cache = cache_temp
+                    try:
+                        with open(data.cache_file_name, 'rb') as cache_file:
+                            func_hash, cache_temp = pickle.load(cache_file)
+                            if func_hash == data.deep_hash:
+                                data.cache = cache_temp
+                    except Exception as error:
+                        # auto remove corrupted files
+                        FS.remove(cache_file)
                 data.calculated = True
             
             # 
