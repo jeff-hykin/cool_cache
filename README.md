@@ -1,6 +1,6 @@
 # What is this?
 
-The smart way to cache function outputs to permanent storage.
+The smart way to cache outputs to cold storage.
 
 - auto rebuilds cache when you edit function source code
 - uses mutltiprocessing to keep main thread running fast while saving to disk
@@ -15,8 +15,9 @@ The smart way to cache function outputs to permanent storage.
 ```python
 from cool_cache import cache, settings
 
+settings.default_folder = None # disable caching to cold-storage, and instead cache to ram
 # this is the default, but you can change it
-settings.default_folder="cache.ignore/"
+settings.default_folder = "cache.ignore/"
 
 # 
 # 
