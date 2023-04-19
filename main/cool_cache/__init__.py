@@ -10,6 +10,7 @@ import queue
 import threading
 from os import path
 from threading import Thread
+from copy import deepcopy
 
 import file_system_py as FS
 from super_hash import super_hash, hash_file
@@ -23,7 +24,7 @@ except ImportError as error:
 
 settings = LazyDict(
     default_folder="cache.ignore/",
-    worker_que_size=100,
+    worker_que_size=1000,
 )
 
 class NotGiven:
@@ -149,6 +150,11 @@ def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_fi
                 else:
                     result = input_func(*args, **kwargs)
                     data.cache[arg_hash] = result # save the output for next time
+                    data_to_push = CacheData()
+                    data_to_push = deepcopy(data.calculated)
+                    data_to_push = deepcopy(data.cache_file_name)
+                    data_to_push = deepcopy(data.deep_hash)
+                    data_to_push = deepcopy(data.cache)
                     worker_que.put(data, block=False) # use a different process for saving to disk to prevent slowdown
                     return result
             return wrapper
