@@ -151,11 +151,11 @@ def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_fi
                     result = input_func(*args, **kwargs)
                     data.cache[arg_hash] = result # save the output for next time
                     data_to_push = CacheData()
-                    data_to_push = deepcopy(data.calculated)
-                    data_to_push = deepcopy(data.cache_file_name)
-                    data_to_push = deepcopy(data.deep_hash)
-                    data_to_push = deepcopy(data.cache)
-                    worker_que.put(data, block=False) # use a different process for saving to disk to prevent slowdown
+                    data_to_push.calculated      = deepcopy(data.calculated)
+                    data_to_push.cache_file_name = deepcopy(data.cache_file_name)
+                    data_to_push.deep_hash       = deepcopy(data.deep_hash)
+                    data_to_push.cache           = deepcopy(data.cache)
+                    worker_que.put(data_to_push, block=False) # use a different process for saving to disk to prevent slowdown
                     return result
             return wrapper
         return real_decorator
