@@ -12,9 +12,8 @@ from os import path
 from threading import Thread
 from copy import deepcopy
 
-import file_system_py as FS
-from super_hash import super_hash, hash_file
-from super_map import LazyDict
+from .__dependencies__ import file_system_py as FS
+from .__dependencies__.super_hash import super_hash, hash_file
 
 try:
     # use dill if its available
@@ -22,13 +21,15 @@ try:
 except ImportError as error:
     pass
 
-settings = LazyDict(
-    default_folder="cache.ignore/",
-    worker_que_size=1000,
-)
+class Object:
+    pass
 
 class NotGiven:
     pass
+
+settings = Object()
+settings.default_folder = "cache.ignore/"
+settings.worker_que_size = 1000
 
 class CacheData:
     calculated = False

@@ -26,6 +26,9 @@ setuptools.setup(
     license=package_info["license"],
     packages=[package_info["name"]],
     install_requires=[
+        # examples:
+        # 'python-socketio >= 5.3.0',
+        # 'requests == 2.26.0',
     ],
     classifiers=[
         # examples:
