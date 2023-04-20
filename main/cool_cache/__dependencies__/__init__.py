@@ -156,18 +156,23 @@ for dependency_name, dependency_info in dependency_mapping.items():
     eval_part = dependency_info.get("eval", dependency_name)
     unique_name = f"{dependency_name}_{random()}_{counter}".replace(".","")
     target_folder_for_import = join(this_folder, dependency_name)
-    source_path = dependency_info["path"]
-    if not exists(source_path):
-        raise Exception(f'''\n\n\nThe {dependency_name} module has a path of {repr(source_path)}\nHowever, that path is empty so I can't really import it\n(Note: that path is defined inside of {repr(settings_path)})''')
-    if not Path(target_folder_for_import).is_symlink() or final_target_of(target_folder_for_import) != source_path:
+    if not Path(target_folder_for_import).is_symlink() or final_target_of(target_folder_for_import) != dependency_info["path"]:
         # clear the way
         remove(target_folder_for_import)
         # symlink the folder
-        Path(target_folder_for_import).symlink_to(source_path)
+        Path(target_folder_for_import).symlink_to(dependency_info["path"])
 
 # import the paths
 __all__ = []
 for dependency_name, dependency_info in dependency_mapping.items():
     # this will register it with python and convert it to a proper module with a unique path (important for pickling things)
-    exec(f"""from .{dependency_name} import __file__ as _""")
-    __all__.append(dependency_name)
+    try:
+        exec(f"""from .{dependency_name} import __file__ as _""")
+        __all__.append(dependency_name)
+    except ImportError as error:
+        if f"{error}" == "ImportError: cannot import name '__file__'":
+            # this means top level folder isn't a module or doesnt have a __init__.py
+            # some modules simply are like this
+            pass
+        else:
+            raise error
