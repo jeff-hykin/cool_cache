@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cool_cache"
-version = "0.3.3"
+version = "0.3.4"
 description = "Cache any function to disk"
 authors=[]
 
@@ -9,16 +9,13 @@ author='Jeff Hykin'
 author_email='jeff.hykin@gmail.com'
 url='https://github.com/jeff-hykin/cool_cache.git'
 license = "MIT"
-main_module_path = "main/YOUR_PACKAGE_NAME"
+main_module_path = "main/cool_cache"
 
 [[tool.extra.pure_python_packages]]
-path = "main/YOUR_PACKAGE_NAME"
+path = "main/cool_cache"
 
 [tool.poetry.dependencies]
 python = ">=3.7,<3.12"
-file-system-py = "^0.0.6"
-super-hash = "^1.2.2"
-super-map = "^1.2.1"
 
 [tool.poetry.dev-dependencies]
 twine = "3.4.1"
