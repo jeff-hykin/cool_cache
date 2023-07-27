@@ -4,7 +4,7 @@ echo "1.33.1"; : --% ' |out-null <#'; }; version="$(dv)"; deno="$HOME/.deno/$ver
 # */0}`;
 import { FileSystem, glob } from "https://deno.land/x/quickr@0.6.36/main/file_system.js"
 import { run, Stderr, Stdout } from "https://deno.land/x/quickr@0.6.36/main/run.js"
-import { recursivelyAllKeysOf, get, set, remove, merge, compareProperty } from "https://deno.land/x/good@1.4.4.0/object.js"
+import { recursivelyAllKeysOf, get, set, remove, merge, compareProperty } from "https://deno.land/x/good@1.4.4.1/object.js"
 
 // go to project root
 FileSystem.cwd = await FileSystem.walkUpUntil(".git/")
