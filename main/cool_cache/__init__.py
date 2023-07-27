@@ -20,12 +20,13 @@ from .__dependencies__.super_hash import super_hash, hash_file
     # perform lightweight checks on list-likes (numpy, torch tensors, etc), by saving their shape and comparing shape before fully hashing what might be a giantic object (if shapes are different cache is instantly busted)
 
 def get_pickle():
+    pickle = None
     if settings.prefer_dill_over_pickle:
         try:
             # use dill if its available
             import dill as pickle
         except ImportError as error:
-            pass
+            import pickle
     else:
         import pickle
     
