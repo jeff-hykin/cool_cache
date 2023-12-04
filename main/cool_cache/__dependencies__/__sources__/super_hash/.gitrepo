@@ -6,7 +6,7 @@
 [subrepo]
 	remote = git@github.com:jeff-hykin/super_hash.git
 	branch = master
-	commit = 417873fd7c46bc9cd874748ca1daec480fed8182
-	parent = 44c7d57a040f04244ace37c30f1aa34e9e93fd64
+	commit = 38ebcf93a1e74c3afbd7ee8c0dd2fe66b5969fbc
+	parent = 77005fa8493b447ad69942e98acbe1a1f9934c9c
 	method = merge
-	cmdver = 0.4.5
+	cmdver = 0.4.1
