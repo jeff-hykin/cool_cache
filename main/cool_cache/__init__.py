@@ -2,15 +2,9 @@
 # (MIT License on PyPi)
 # has been modified to use super_hash and work on python3.8
 
-import dis
-import hashlib
-import inspect
-import pickle
-import queue
-import threading
 from os import path
-from threading import Thread
 from copy import deepcopy
+import time
 
 from .__dependencies__ import file_system_py as FS
 from .__dependencies__.super_hash import super_hash, hash_file
@@ -103,12 +97,16 @@ def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_fi
     
     # save in cold storage
     else:
+        import queue
+        import pickle
+        import threading
+        from threading import Thread
         if worker_que is None:
             worker_que = queue.Queue(maxsize=settings.worker_que_size)
             thread = Thread(target=worker)
             thread.start()
         def real_decorator(input_func):
-            data = CacheData()  # because we need a reference not a value or compile error
+            data = CacheData()
             function_id = super_hash(input_func)
             data.cache_file_name = f'cache.ignore/{function_id}.pickle'
             if bust:
@@ -175,6 +173,10 @@ def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_fi
 
 def worker():
     global worker_que
+    import queue
+    import threading
+    from threading import Thread
+    
     while threading.main_thread().is_alive():
         try:
             if worker_que is not None:
