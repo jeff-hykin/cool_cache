@@ -1,4 +1,5 @@
 from cool_cache import cache, settings
+import time
 
 # this is the default, but you can change it
 settings.default_folder="cache.ignore/"
@@ -63,3 +64,31 @@ class MyThing:
     def do_some_stuff(self, arg1):
         from time import sleep; sleep(1)
         return self.path + arg1
+
+
+# 
+# keep_for cache busting (using m = milliseconds here)
+# 
+@cache(keep_for="2m")
+def fast_expiring(value):
+    return time.time()
+
+first = fast_expiring("hello")
+second = fast_expiring("hello")
+# should be cached immediately
+print(f"fast_expiring cached immediately: {first == second}")
+# wait long enough for 2ms to pass
+from time import sleep; sleep(0.01)
+third = fast_expiring("hello")
+print(f"fast_expiring refreshed after expiry: {first != third}")
+
+
+# 
+# invalid keep_for should raise helpful error
+# 
+try:
+    @cache(keep_for="not_a_unit")
+    def invalid_keep_for():
+        return 1
+except Exception as error:
+    print(f"invalid keep_for error: {error}")

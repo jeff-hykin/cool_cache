@@ -82,6 +82,18 @@ things_with_files("./file1.txt", "./file2.txt", "hello")  # not yet cached, beca
 things_with_files("./file1.txt", "./file2.txt", "hello")  # cached
 
 # 
+# cache expiry
+# 
+@cache(keep_for="2d")  # bust the cache entry after ~2 days
+def sometimes_stale(a, b):
+    return a + b
+
+# accepted units: m (milliseconds), s, h, d, mo (~30 days), y (~365 days)
+@cache(keep_for="500m")  # 500 milliseconds
+def quick_refreshing():
+    ...
+
+# 
 # 
 # class methods (e.g. self)
 # 

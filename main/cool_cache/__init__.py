@@ -37,6 +37,17 @@ settings.default_folder = "cache.ignore/"
 settings.worker_que_size = 1000
 settings.prefer_dill_over_pickle = True
 
+TIME_SUFFIXES_IN_SECONDS = {
+    # m is milliseconds to keep the shorthand compact
+    "m": 0.001,
+    "s": 1,
+    "h": 60 * 60,
+    "d": 60 * 60 * 24,
+    # 30d + 365d approximations are plenty accurate for cache busting
+    "mo": 60 * 60 * 24 * 30,
+    "y": 60 * 60 * 24 * 365,
+}
+
 class CacheData:
     calculated = False
     cache_file_name = ""
@@ -45,8 +56,10 @@ class CacheData:
 
 # since we only care about latest
 worker_que = None
-def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_filepaths=lambda *args, **kwargs:[], custom_hasher=None, bust=False):
+
+def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_filepaths=lambda *args, **kwargs:[], custom_hasher=None, bust=False, keep_for=None):
     global worker_que
+    keep_for_seconds = parse_keep_for_seconds(keep_for)
     
     if folder == NotGiven:
         folder = settings.default_folder
@@ -86,12 +99,15 @@ def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_fi
                 # check if this arg combination has been used already
                 arg_hash = super_hash((hashed_args, kwargs, depends_on(), file_hashes))
                 if arg_hash in in_memory_cache:
-                    return in_memory_cache[arg_hash]
+                    cached_value, created_at = in_memory_cache[arg_hash]
+                    if is_expired(keep_for_seconds, created_at):
+                        in_memory_cache.pop(arg_hash, None)
+                    else:
+                        return cached_value
                 # if args not in cache, run the function
-                else:
-                    result = input_func(*args, **kwargs)
-                    in_memory_cache[arg_hash] = result # save the output for next time
-                    return result
+                result = input_func(*args, **kwargs)
+                in_memory_cache[arg_hash] = (time.time(), result)
+                return result
             return wrapper
         return decorator_name
     
@@ -155,12 +171,20 @@ def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_fi
                 
                 # check if this arg combination has been used already
                 arg_hash = super_hash((hashed_args, kwargs, depends_on(), file_hashes))
+                cache_changed = False
                 if arg_hash in data.cache:
-                    return data.cache[arg_hash]
+                    cached_value, created_at = data.cache[arg_hash]
+                    if not is_expired(keep_for_seconds, created_at):
+                        return cached_value
+                    else:
+                        # remove from cache and calculate new value
+                        data.cache.pop(arg_hash, None)
+                        cache_changed = True
                 # if args not in cache, run the function
-                else:
-                    result = input_func(*args, **kwargs)
-                    data.cache[arg_hash] = result # save the output for next time
+                result = input_func(*args, **kwargs)
+                data.cache[arg_hash] = (time.time(), result)
+                cache_changed = True
+                if cache_changed:
                     data_to_push = CacheData()
                     data_to_push.calculated      = deepcopy(data.calculated)
                     data_to_push.cache_file_name = deepcopy(data.cache_file_name)
@@ -189,3 +213,39 @@ def worker():
                 worker_que.task_done()
         except queue.Empty:
             continue
+
+
+def parse_keep_for_seconds(keep_for):
+    if keep_for is None:
+        return None
+    if not isinstance(keep_for, str):
+        raise ValueError("keep_for must be None or a duration string like '10s' or '2d'")
+    
+    cleaned = keep_for.strip().lower()
+    # longest suffixes first so "mo" wins over "m"
+    for suffix in sorted(TIME_SUFFIXES_IN_SECONDS.keys(), key=len, reverse=True):
+        if cleaned.endswith(suffix):
+            number_portion = cleaned[: -len(suffix)]
+            try:
+                amount = float(number_portion)
+            except ValueError:
+                raise ValueError(f"keep_for '{keep_for}' must start with a number before the unit (examples: 500m, 10s, 1.5h, 2d, 1mo, 1y)")
+            return amount * TIME_SUFFIXES_IN_SECONDS[suffix]
+    
+    valid_units = ", ".join([
+        "m (milliseconds)",
+        "s (seconds)",
+        "h (hours)",
+        "d (days)",
+        "mo (months ~30d)",
+        "y (years ~365d)",
+    ])
+    raise ValueError(f"keep_for '{keep_for}' must end with one of: {valid_units}")
+
+
+def is_expired(expiry_seconds, created_at):
+    if expiry_seconds is None:
+        return False
+    if created_at is None:
+        return True
+    return (time.time() - created_at) >= expiry_seconds
