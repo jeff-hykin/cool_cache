@@ -1,8 +1,10 @@
+import file_system_py as FS
 from cool_cache import cache, settings
 import time
 
 # this is the default, but you can change it
 settings.default_folder="cache.ignore/"
+FS.remove("cache.ignore/")
 
 # 
 # simple usage (updates whenever function is edited (excluding comments) or when args change)
@@ -14,10 +16,14 @@ def things_with_args(a,b,c):
     
     return a + b + c
 
-print(things_with_args(1,2,3)) # not yet cached
-print(things_with_args(1,2,3)) # uses cache
-print(things_with_args(9,9,9)) # not yet cached
-print(things_with_args(9,9,9)) # uses cache
+print("not yet cached:") # not yet cached
+print(things_with_args(1,2,3))
+print("cached:") # uses cache
+print(things_with_args(1,2,3))
+print("not yet cached:") # not yet cached
+print(things_with_args(9,9,9))
+print("not yet cached:") # uses cache
+print(things_with_args(9,9,9))
 
 
 # 

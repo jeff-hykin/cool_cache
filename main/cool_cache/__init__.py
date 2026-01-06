@@ -48,11 +48,11 @@ TIME_SUFFIXES_IN_SECONDS = {
     "y": 60 * 60 * 24 * 365,
 }
 
-class CacheData:
+class PerFuncCache:
     calculated = False
     cache_file_name = ""
     deep_hash = ""
-    cache = {}
+    arg_hash_to_value = {}
 
 # since we only care about latest
 worker_que = None
@@ -99,7 +99,12 @@ def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_fi
                 # check if this arg combination has been used already
                 arg_hash = super_hash((hashed_args, kwargs, depends_on(), file_hashes))
                 if arg_hash in in_memory_cache:
-                    cached_value, created_at = in_memory_cache[arg_hash]
+                    # if old format (before keep_for was added), add current time to it
+                    if type(in_memory_cache[arg_hash]) != tuple or len(in_memory_cache[arg_hash]) != 2 or type(in_memory_cache[arg_hash][0]) != float:
+                        value = in_memory_cache[arg_hash]
+                        in_memory_cache[arg_hash] = (time.time(), value)
+                        return value
+                    created_at, cached_value = in_memory_cache[arg_hash]
                     if is_expired(keep_for_seconds, created_at):
                         in_memory_cache.pop(arg_hash, None)
                     else:
@@ -122,11 +127,11 @@ def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_fi
             thread = Thread(target=worker)
             thread.start()
         def real_decorator(input_func):
-            data = CacheData()
+            function_cache_manager = PerFuncCache()
             function_id = super_hash(input_func)
-            data.cache_file_name = f'cache.ignore/{function_id}.pickle'
+            function_cache_manager.cache_file_name = f'cache.ignore/{function_id}.pickle'
             if bust:
-                FS.remove(data.cache_file_name)
+                FS.remove(function_cache_manager.cache_file_name)
             def wrapper(*args, **kwargs):
                 hashed_args = list(args)
                 # if watching attributes on self, replace first arg
@@ -143,18 +148,18 @@ def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_fi
                     hashed_args[0] = attributes
                 
                 # load cached values for this function
-                if not data.calculated:
-                    data.deep_hash = function_id
-                    if path.exists(data.cache_file_name):
+                if not function_cache_manager.calculated:
+                    function_cache_manager.deep_hash = function_id
+                    if path.exists(function_cache_manager.cache_file_name):
                         try:
-                            with open(data.cache_file_name, 'rb') as cache_file:
+                            with open(function_cache_manager.cache_file_name, 'rb') as cache_file:
                                 func_hash, cache_temp = get_pickle().load(cache_file)
-                                if func_hash == data.deep_hash:
-                                    data.cache = cache_temp
+                                if func_hash == function_cache_manager.deep_hash:
+                                    function_cache_manager.arg_hash_to_value = cache_temp
                         except Exception as error:
                             # auto remove corrupted files
-                            FS.remove(data.cache_file_name)
-                    data.calculated = True
+                            FS.remove(function_cache_manager.cache_file_name)
+                    function_cache_manager.calculated = True
                 
                 # 
                 # filepath hashes
@@ -171,27 +176,30 @@ def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_fi
                 
                 # check if this arg combination has been used already
                 arg_hash = super_hash((hashed_args, kwargs, depends_on(), file_hashes))
-                cache_changed = False
-                if arg_hash in data.cache:
-                    cached_value, created_at = data.cache[arg_hash]
+                arg_hash_to_value = function_cache_manager.arg_hash_to_value
+                if arg_hash in arg_hash_to_value:
+                    # if old format (before keep_for was added), add current time to it
+                    if type(arg_hash_to_value[arg_hash]) != tuple or len(arg_hash_to_value[arg_hash]) != 2 or type(arg_hash_to_value[arg_hash][0]) != float:
+                        value = arg_hash_to_value[arg_hash]
+                        arg_hash_to_value[arg_hash] = (time.time(), value)
+                        return value
+                    
+                    created_at, cached_value = arg_hash_to_value[arg_hash]
                     if not is_expired(keep_for_seconds, created_at):
                         return cached_value
                     else:
                         # remove from cache and calculate new value
-                        data.cache.pop(arg_hash, None)
-                        cache_changed = True
+                        arg_hash_to_value.pop(arg_hash, None)
                 # if args not in cache, run the function
                 result = input_func(*args, **kwargs)
-                data.cache[arg_hash] = (time.time(), result)
-                cache_changed = True
-                if cache_changed:
-                    data_to_push = CacheData()
-                    data_to_push.calculated      = deepcopy(data.calculated)
-                    data_to_push.cache_file_name = deepcopy(data.cache_file_name)
-                    data_to_push.deep_hash       = deepcopy(data.deep_hash)
-                    data_to_push.cache           = deepcopy(data.cache)
-                    worker_que.put(data_to_push, block=False) # use a different process for saving to disk to prevent slowdown
-                    return result
+                arg_hash_to_value[arg_hash] = (time.time(), result)
+                data_to_push = PerFuncCache()
+                data_to_push.calculated        = deepcopy(function_cache_manager.calculated)
+                data_to_push.cache_file_name   = deepcopy(function_cache_manager.cache_file_name)
+                data_to_push.deep_hash         = deepcopy(function_cache_manager.deep_hash)
+                data_to_push.arg_hash_to_value = deepcopy(arg_hash_to_value)
+                worker_que.put(data_to_push, block=False) # use a different process for saving to disk to prevent slowdown
+                return result
             return wrapper
         return real_decorator
 
@@ -199,17 +207,16 @@ def worker():
     global worker_que
     import queue
     import threading
-    from threading import Thread
     
     while threading.main_thread().is_alive():
         try:
             if worker_que is not None:
-                data = worker_que.get(timeout=0.1) # 0.1 second. Allows for checking if the main thread is alive
+                function_cache_manager = worker_que.get(timeout=0.1) # 0.1 second. Allows for checking if the main thread is alive
                 while not worker_que.empty(): # so we only write the latest value
-                    data = worker_que.get(block=False)
-                FS.clear_a_path_for(data.cache_file_name, overwrite=True)
-                with open(data.cache_file_name, 'wb') as cache_file:
-                    get_pickle().dump((data.deep_hash, data.cache), cache_file, protocol=4)
+                    function_cache_manager = worker_que.get(block=False)
+                FS.clear_a_path_for(function_cache_manager.cache_file_name, overwrite=True)
+                with open(function_cache_manager.cache_file_name, 'wb') as cache_file:
+                    get_pickle().dump((function_cache_manager.deep_hash, function_cache_manager.arg_hash_to_value), cache_file, protocol=4)
                 worker_que.task_done()
         except queue.Empty:
             continue
