@@ -69,7 +69,7 @@ class MyThing:
 # 
 # keep_for cache busting (using m = milliseconds here)
 # 
-@cache(keep_for="2m")
+@cache(keep_for="2ms")
 def fast_expiring(value):
     return time.time()
 
@@ -87,7 +87,7 @@ print(f"fast_expiring refreshed after expiry: {first != third}")
 # invalid keep_for should raise helpful error
 # 
 try:
-    @cache(keep_for="not_a_unit")
+    @cache(keep_for=10)
     def invalid_keep_for():
         return 1
 except Exception as error:

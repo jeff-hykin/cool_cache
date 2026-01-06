@@ -89,7 +89,7 @@ def sometimes_stale(a, b):
     return a + b
 
 # accepted units: m (milliseconds), s, h, d, mo (~30 days), y (~365 days)
-@cache(keep_for="500m")  # 500 milliseconds
+@cache(keep_for="500ms")  # 500 milliseconds
 def quick_refreshing():
     ...
 
