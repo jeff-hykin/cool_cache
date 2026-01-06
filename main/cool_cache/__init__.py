@@ -38,8 +38,8 @@ settings.worker_que_size = 1000
 settings.prefer_dill_over_pickle = True
 
 TIME_SUFFIXES_IN_SECONDS = {
-    # m is milliseconds to keep the shorthand compact
-    "m": 0.001,
+    # ms is milliseconds to keep the shorthand compact
+    "ms": 0.001,
     "s": 1,
     "h": 60 * 60,
     "d": 60 * 60 * 24,
@@ -222,25 +222,24 @@ def parse_keep_for_seconds(keep_for):
         raise ValueError("keep_for must be None or a duration string like '10s' or '2d'")
     
     cleaned = keep_for.strip().lower()
-    # longest suffixes first so "mo" wins over "m"
     for suffix in sorted(TIME_SUFFIXES_IN_SECONDS.keys(), key=len, reverse=True):
         if cleaned.endswith(suffix):
             number_portion = cleaned[: -len(suffix)]
             try:
                 amount = float(number_portion)
             except ValueError:
-                raise ValueError(f"keep_for '{keep_for}' must start with a number before the unit (examples: 500m, 10s, 1.5h, 2d, 1mo, 1y)")
+                raise ValueError(f"keep_for '{keep_for}' must start with a number before the unit (examples: 500ms, 10s, 1.5h, 2d, 1mo, 1y)")
             return amount * TIME_SUFFIXES_IN_SECONDS[suffix]
     
     valid_units = ", ".join([
-        "m (milliseconds)",
+        "ms (milliseconds)",
         "s (seconds)",
         "h (hours)",
         "d (days)",
         "mo (months ~30d)",
         "y (years ~365d)",
     ])
-    raise ValueError(f"keep_for '{keep_for}' must end with one of: {valid_units}")
+    raise ValueError(f"keep_for '{keep_for}' must end with one of: {valid_units}. For example keep_for='200ms', keep_for='30d', or keep_for='2mo'")
 
 
 def is_expired(expiry_seconds, created_at):
