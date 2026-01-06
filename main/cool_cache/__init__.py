@@ -36,6 +36,7 @@ settings = Object()
 settings.default_folder = "cache.ignore/"
 settings.worker_que_size = 1000
 settings.prefer_dill_over_pickle = True
+settings.default_keep_for = None
 
 TIME_SUFFIXES_IN_SECONDS = {
     # ms is milliseconds to keep the shorthand compact
@@ -57,9 +58,10 @@ class PerFuncCache:
 # since we only care about latest
 worker_que = None
 
-def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_filepaths=lambda *args, **kwargs:[], custom_hasher=None, bust=False, keep_for=None):
+def cache(folder=NotGiven, depends_on=lambda:None, watch_attributes=[], watch_filepaths=lambda *args, **kwargs:[], custom_hasher=None, bust=False, keep_for=NotGiven):
     global worker_que
-    keep_for_seconds = parse_keep_for_seconds(keep_for)
+    keep_for_value = settings.default_keep_for if keep_for is NotGiven else keep_for
+    keep_for_seconds = parse_keep_for_seconds(keep_for_value)
     
     if folder == NotGiven:
         folder = settings.default_folder
