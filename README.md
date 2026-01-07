@@ -93,6 +93,10 @@ def sometimes_stale(a, b):
 def quick_refreshing():
     ...
 
+# set a global default for all caches (can still override per-decorator)
+from cool_cache import settings
+settings.default_keep_for = "1h"
+
 # 
 # 
 # class methods (e.g. self)
