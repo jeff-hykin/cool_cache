@@ -88,7 +88,7 @@ things_with_files("./file1.txt", "./file2.txt", "hello")  # cached
 def sometimes_stale(a, b):
     return a + b
 
-# accepted units: m (milliseconds), s, h, d, mo (~30 days), y (~365 days)
+# accepted units: ms (milliseconds), s, h, d, mo (~30 days), y (~365 days)
 @cache(keep_for="500ms")  # 500 milliseconds
 def quick_refreshing():
     ...
