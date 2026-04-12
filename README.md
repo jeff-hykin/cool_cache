@@ -3,7 +3,7 @@
 The smart way to cache outputs to cold storage.
 
 - auto rebuilds cache when you edit function source code
-- uses mutltiprocessing to keep main thread running fast while saving to disk
+- uses a background thread to keep the main thread running fast while saving to disk
 - excellent change-tracking of arguments thanks to `super_hash`
 - can watch change-tracking of external vars and method attributes
 - uses python pickle for saving function outputs, if `dill` is available it will use that instead
